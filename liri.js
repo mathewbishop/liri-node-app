@@ -1,7 +1,12 @@
 require("dotenv").config();
 
 var key = require("./keys.js");
+var fs = require("fs");
+var request = require("request");
 var spotify = new Spotify(keys.spotify);
+
+var command = process.argv[2];
+var arg = process.argv[3];
 
 // features/user input
     // concert-this
