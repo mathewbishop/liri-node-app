@@ -2,18 +2,14 @@ require("dotenv").config();
 
 var keys = require("./keys.js");
 var fs = require("fs");
+var moment = require("moment");
 var request = require("request");
 var Spotify = require("node-spotify-api");
 
 
 var command = process.argv[2];
-var arg = process.argv[3];
+var arg = process.argv.slice(3).join(" ");
 
-// features/user input
-    // concert-this
-    // spotify-this-song
-    // movie-this
-    // do-what-it-says
 
     switch (command) {
         case "concert-this":
@@ -33,27 +29,29 @@ var arg = process.argv[3];
         break;
     };
 
-// bands in town "https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp"
-    // need name, venue, date of event MM/DD/YYYY
 
 function bandsInTown(arg) {
-    let artist = arg;
-    let queryURL = "https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp";
+    
+    let queryURL = "https://rest.bandsintown.com/artists/" + arg + "/events?app_id=codingbootcamp";
 
-    request(queryURL, function(error, body, response) {
+    request(queryURL, function(error, response, body) {
         if (arg == null) {
-            console.log("Please enter an artist next time.");
+            console.log("Please enter a band next time.");
         }
         
         if (!error && response.statusCode === 200) {
-            console.log(JSON.parse(body));
-            // console.log("Name: " + JSON.parse(body).artistname);
+            console.log("Venue Name: " + JSON.parse(body)[0].venue.name);
+            console.log("Venue Location: " + JSON.parse(body)[0].venue.city);
+
+            let dateTime = JSON.parse(body)[0].datetime;
+            console.log("Concert Date: " + moment(dateTime).format('MM/DD/YYYY'));   
+        }
+        if (error) {
+            console.log("We're sorry, there was an error. Error # " + error);
+            return;
         }
     })
 }
- 
-// spotify     node spotify api https://www.npmjs.com/package/node-spotify-api
-    // need artist, song name, preview link, album
 
 function spotify(arg) {
     let spotify = new Spotify(keys.spotifyKeys);
@@ -72,16 +70,30 @@ function spotify(arg) {
     })
 }
 
-// movie    OMDB    default to mr. nobody 
-    // Title of the movie.
-    // Year the movie came out.
-    // IMDB Rating of the movie.
-    // Rotten Tomatoes Rating of the movie.
-    // Country where the movie was produced.
-    // Language of the movie.
-    // Plot of the movie.
-    // Actors in the movie.
 
-// option 4   
-    // random.txt
-    // spotify for I Want it That Way
+function movie(arg) {
+    let queryURL = "http://www.omdbapi.com/?t=" + arg + "&y=&plot=short&apikey=c3abf7c6"
+        request(queryURL, function(error, response, body) {
+            if (!error && response.statusCode === 200) {
+                console.log("Title: " + JSON.parse(body).Title);
+                console.log("Year: " + JSON.parse(body).Year);
+                console.log("IMDB Rating: " + JSON.parse(body).Rated);
+                console.log("Rotten Tomatoes Rating: " + JSON.parse(body).Ratings[1]);
+                console.log("Country: " + JSON.parse(body).Country);
+                console.log("Language: " + JSON.parse(body).Language);
+                console.log("Plot: " + JSON.parse(body).Plot);
+                console.log("Actors: " + JSON.parse(body).Actors);
+            }
+        })
+
+}
+
+
+function random() {
+    fs.readFile("random.txt", "utf-8", function(err, data) {
+        if (err) {
+            console.log("Error. Something didn't act right.");
+        }
+        spotify(data);
+    })
+}
